@@ -76,11 +76,8 @@ MidasQuantile <- function(y,yDate,x = NULL, xDate = NULL, q = 0.01,
   x_pos = x
   x_neg[yHigh > 0] = 0
   x_pos[yHigh <= 0] = 0
-  if(is.null(Params)){
-  if(is.null(startPars)){# && (horizon == 1 || (horizon > 1 && ovlap) || is.na(betaIni))){
-    betaIni = GetIniParams_midas(y = y, X = x,X_neg = x_neg,X_pos = x_pos, q = q, numInitialsRand = numInitialsRand,
+  betaIni = GetIniParams_midas(y = y, X = x,X_neg = x_neg,X_pos = x_pos, q = q, numInitialsRand = numInitialsRand,
                                                           numInitials = numInitials, beta2para = beta2para,As = As)
-  }
   #----- Estimate the paramters -----------
   sol = try(.sol(MainSolver = MainSolver,SecondSolver = SecondSolver,betaIni = betaIni,fun = objFun_midas,
              y = y, x = x,x_neg = x_neg, x_pos = x_pos, q = q, beta2para = beta2para,
@@ -300,11 +297,6 @@ MidasQuantileResume <- function(object, MainSolver = "neldermead", SecondSolver 
                lb = lb, ub = ub, control = fitcontrol,warn = warn,As=As, conv = convergeFlag, forecastLength = forecastLength, constrained = constrained)
   } else{
     condVaR = condVaR_midas(params = estPars,Xr = x,Xr_neg = x_neg,Xr_pos = x_pos,beta2para = beta2para,As = As)
-    if(q < 0.5 && any(condVaR > 0)){
-      out = list(estPars = NA, yLowFreq = y, yDate = yDate, betaIni = betaIni,x = x, simpleRet = simpleRet,fitcontrol = fitcontrol,
-                 x_neg = x_neg, x_pos = x_pos, q = q, beta2para = beta2para, nlag = nlag, horizon = horizon, GetSe = GetSe, GetSeSim = GetSeSim,
-                 lb = lb, ub = ub, control = fitcontrol,warn = warn,As=As, conv = 1, forecastLength = forecastLength, constrained = constrained)
-    }else{
       betaIniSim = matrix(estPars,nrow = 1)
       if(beta2para){
         if(As){
@@ -345,7 +337,6 @@ MidasQuantileResume <- function(object, MainSolver = "neldermead", SecondSolver 
                  ViolateRate = ViolateRate, quantile = q, beta2para = beta2para, Solvers = c(MainSolver,SecondSolver),constrained = constrained,
                  horizon = horizon, fval = fval, conv = convergeFlag,forecastLength = forecastLength,ovlap = ovlap,nlag = nlag)
     }
-  }
   }
   return(out)
 }
