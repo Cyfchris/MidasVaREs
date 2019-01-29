@@ -56,40 +56,11 @@ MidasQuantile <- function(y,yDate,x = NULL, xDate = NULL, q = 0.01,
     }
   }
   #----- Get the initial guess for the parameters-----
-  # It seems like the best way to find the initial beta guess in case of non-ovlapping dataset 
+  # It seems like the best way to find the initial beta guess in case of non-ovlapping dataset
   # is to run an overlapping estimation to ultilize the rich of data
   if(is.null(Params)){
   if(!is.null(startPars)){
     betaIni = matrix(rep(startPars,numInitials),nrow = numInitials, byrow = TRUE)
-  }# else if(horizon > 1 && !ovlap){
-  #if(is.null(startPars)){
-  #   est_ovl <- try(MidasQuantile(y = y,yDate = yDate, xDate = xDate, x = x, q = q, horizon = horizon, nlag = nlag,
-  #                           numInitialsRand = numInitialsRand, ovlap = TRUE, constrained = constrained, numInitials = numInitials,
-  #                          beta2para = beta2para, GetSe = FALSE,startPars = NULL,MainSolver = MainSolver, SecondSolver = SecondSolver,
-  #                          fitcontrol = fitcontrol, As = As, forecastLength = 0, simpleRet = simpleRet, multiSol = multiSol),silent = TRUE)
-  #   if(inherits(est_ovl,"try-error")){
-  #     betaIni = NA
-  #   } else{
-  #   if(est_ovl$conv == 1){
-  #      for(i in 1:3){
-  #       est_ovl = MidasQuantileResume(est_ovl)
-  #       if(est_ovl$conv == 0){
-  #          betaIni = matrix(rep(est_ovl$estPars,numInitials),nrow = numInitials, byrow = TRUE)
-  #          break
-  #        }else{
-  #          betaIni = NA
-  #        }
-  #      }
-  #    } else{
-  #      betaIni = matrix(rep(est_ovl$estPars,numInitials),nrow = numInitials, byrow = TRUE)
-  #    }
-  #   }
-  #} else{
-  #  betaIni = matrix(rep(startPars,numInitials),nrow = numInitials, byrow = TRUE)
-  #}
-  #} else{
-    # In case: null(startPars) or horizon > 1 and ovlap or non-converged first try, rely purely on random sampling
-  #}
   }
   #------ Get the mixed data to start estimation -----
   dataEst <- MixedFreqQuant(DataY = y,DataYdate = yDate,DataX = x,DataXdate = xDate,
@@ -112,7 +83,7 @@ MidasQuantile <- function(y,yDate,x = NULL, xDate = NULL, q = 0.01,
   }
   #----- Estimate the paramters -----------
   sol = try(.sol(MainSolver = MainSolver,SecondSolver = SecondSolver,betaIni = betaIni,fun = objFun_midas,
-             y = y, x = x,x_neg = x_neg, x_pos = x_pos, q = q, beta2para = beta2para, 
+             y = y, x = x,x_neg = x_neg, x_pos = x_pos, q = q, beta2para = beta2para,
              lb = lb, ub = ub, control = fitcontrol,warn = warn,As=As,multiSol = multiSol),silent = TRUE)
   if(inherits(sol,"try-error")){
     warnings("\nBoth Solvers failed to converge, resume with other available solvers...\n")
@@ -126,14 +97,14 @@ MidasQuantile <- function(y,yDate,x = NULL, xDate = NULL, q = 0.01,
     } else{
       if(sol$convergence == 1){
         sol = .sol(MainSolver = MainSolver,SecondSolver = SecondSolver,betaIni = betaIni,fun = objFun_midas,
-                   y = y, x = x,x_neg = x_neg, x_pos = x_pos, q = q, beta2para = beta2para, 
+                   y = y, x = x,x_neg = x_neg, x_pos = x_pos, q = q, beta2para = beta2para,
                    lb = lb, ub = ub, control = fitcontrol,warn = warn,As=As,multiSol = multiSol)
       } else if(constrained){
         sol = .sol(MainSolver = "bobyqa", betaIni = betaIni,fun = objFun_midas,
-                   y = y, x = x,x_neg = x_neg, x_pos = x_pos, q = q, beta2para = beta2para, 
+                   y = y, x = x,x_neg = x_neg, x_pos = x_pos, q = q, beta2para = beta2para,
                    lb = lb, ub = ub, control = fitcontrol,warn = warn,As=As,multiSol = FALSE)
       } else{
-       # Do nothing 
+       # Do nothing
       }
     }
   }
@@ -193,10 +164,10 @@ MidasQuantile <- function(y,yDate,x = NULL, xDate = NULL, q = 0.01,
     }
   return(out)
 }
-  
+
 
 #-------------------------------------------------
-# Forecasting function 
+# Forecasting function
 #-------------------------------------------------
 #' @export MidasQuantileFor
 
@@ -204,7 +175,7 @@ MidasQuantileFor <- function(object, y, yDate, x = NULL, xDate = NULL){
   #----- Recall the in-sample argument ----
   estPars = object$estPars; beta2para = object$beta2para; As = object$As
   horizon = object$horizon; ovlap = object$ovlap; simpleRet = object$simpleRet; nlag = object$nlag
-  
+
   #-- set up arguments ----
   if(length(yDate) != length(y))  stop("\nMidasQuantile-->error: Length of y and X should be the same\n")
   y[is.na(y)] = mean(y,na.rm = TRUE)
@@ -222,7 +193,7 @@ MidasQuantileFor <- function(object, y, yDate, x = NULL, xDate = NULL){
   } else{
     if(length(xDate) != length(yDate))  stop("\nMidasQuantile-->error: Length of y and X should be the same\n")
   }
-  
+
    if(!beta2para){
     if(As){
       lb = c(-Inf,-Inf,-Inf,1)
@@ -254,19 +225,19 @@ MidasQuantileFor <- function(object, y, yDate, x = NULL, xDate = NULL){
   x_pos = x
   x_neg[yHigh > 0] = 0
   x_pos[yHigh <= 0] = 0
-  
+
   #------ Compute condVaR and return -----
   condVaR = condVaR_midas(params = estPars,Xr = x,Xr_neg = x_neg,Xr_pos = x_pos,beta2para = beta2para,As = As)
   ViolateRate <- (sum(y < condVaR))/(length(y))
   OSout = list(estPars = estPars, yLowFreq = y, yDate = yDate, condVaR = condVaR,simpleRet = simpleRet,
-             ViolateRate = ViolateRate, quantile = object$quantile, beta2para = beta2para, 
+             ViolateRate = ViolateRate, quantile = object$quantile, beta2para = beta2para,
              horizon = horizon, ovlap = ovlap)
   out = list(InSample = object, OutSample = OSout)
   return(out)
 }
- 
+
 #-------------------------------------------------
-# Resume function 
+# Resume function
 #-------------------------------------------------
 #' @export MidasQuantileResume
 
@@ -294,7 +265,7 @@ MidasQuantileResume <- function(object, MainSolver = "neldermead", SecondSolver 
   }
   #----- Estimate the paramters -----------
   sol = try(.sol(MainSolver = MainSolver,SecondSolver = SecondSolver,betaIni = betaIni,fun = objFun_midas,
-             y = y, x = x,x_neg = x_neg, x_pos = x_pos, q = q, beta2para = beta2para, 
+             y = y, x = x,x_neg = x_neg, x_pos = x_pos, q = q, beta2para = beta2para,
              lb = lb, ub = ub, control = fitcontrol,warn = warn,As=As,multiSol = multiSol),silent = TRUE)
   if(inherits(sol,"try-error")){
     warnings("\nBoth Solvers failed to converge, resume with other available solvers...\n")
@@ -308,11 +279,11 @@ MidasQuantileResume <- function(object, MainSolver = "neldermead", SecondSolver 
     } else{
       if(sol$convergence == 1){
         sol = .sol(MainSolver = MainSolver,SecondSolver = SecondSolver,betaIni = betaIni,fun = objFun_midas,
-                   y = y, x = x,x_neg = x_neg, x_pos = x_pos, q = q, beta2para = beta2para, 
+                   y = y, x = x,x_neg = x_neg, x_pos = x_pos, q = q, beta2para = beta2para,
                    lb = lb, ub = ub, control = fitcontrol,warn = warn,As=As,multiSol = multiSol)
       } else if(constrained){
         sol = .sol(MainSolver = "bobyqa", betaIni = betaIni,fun = objFun_midas,
-                   y = y, x = x,x_neg = x_neg, x_pos = x_pos, q = q, beta2para = beta2para, 
+                   y = y, x = x,x_neg = x_neg, x_pos = x_pos, q = q, beta2para = beta2para,
                    lb = lb, ub = ub, control = fitcontrol,warn = warn,As=As,multiSol = FALSE)
       } else{
         break
